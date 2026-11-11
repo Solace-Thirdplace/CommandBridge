@@ -99,13 +99,6 @@ public final class Adapter implements PlatformAdapter {
 
         client.setLocation(Location.VELOCITY);
 
-        try {
-            client.start();
-        } catch (Exception e) {
-            // Connection failed, schedule automatic reconnection
-            client.scheduleReconnection();
-        }
-
         VelocityClientCommands.register(client);
 
         VelocityRegistrationHandler registrationHandler = new VelocityRegistrationHandler(client,
@@ -125,6 +118,15 @@ public final class Adapter implements PlatformAdapter {
                         Location.VELOCITY));
 
         client.onAuthenticated(this::sendPlayerList);
+
+        // Connect only once every handler is in place. The proxy sends REGISTER_COMMANDS straight after auth,
+        // and a message with no handler yet is dropped, which left the backend without its bridged commands.
+        try {
+            client.start();
+        } catch (Exception e) {
+            // Connection failed, schedule automatic reconnection
+            client.scheduleReconnection();
+        }
         proxy.getEventManager().register(pluginInstance, new PlayerListener());
     }
 

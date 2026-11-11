@@ -88,13 +88,6 @@ public final class Adapter implements PlatformAdapter {
                 ? new RedisClient(cfg, dataDir, this)
                 : new WsClient(cfg, dataDir, this);
 
-        try {
-            client.start();
-        } catch (Exception e) {
-            // Connection failed, schedule automatic reconnection
-            client.scheduleReconnection();
-        }
-
         ClientCommands.register(client);
 
         RegistrationHandler registrationHandler = new RegistrationHandler(client);
@@ -110,6 +103,15 @@ public final class Adapter implements PlatformAdapter {
                         Location.BACKEND));
 
         client.onAuthenticated(this::sendPlayerList);
+
+        // Connect only once every handler is in place. The proxy sends REGISTER_COMMANDS straight after auth,
+        // and a message with no handler yet is dropped, which left the backend without its bridged commands.
+        try {
+            client.start();
+        } catch (Exception e) {
+            // Connection failed, schedule automatic reconnection
+            client.scheduleReconnection();
+        }
         Bukkit.getPluginManager().registerEvents(new PlayerListener(), plugin);
     }
 

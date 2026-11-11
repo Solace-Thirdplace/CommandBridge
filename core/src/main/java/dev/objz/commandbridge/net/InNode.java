@@ -26,6 +26,8 @@ public class InNode {
 
     public InNode setSendOperationFactory(BiFunction<Endpoint, Envelope, SendOperation> factory) {
         this.sendOperationFactory = factory;
+        // Handlers are registered before the client connects, so hand the factory to the ones already here.
+        handlers.values().forEach(handler -> handler.setSendOperationFactory(factory));
         return this;
     }
 
